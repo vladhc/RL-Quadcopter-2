@@ -15,7 +15,7 @@ class Task():
             target_pos: target/goal (x,y,z) position for the agent
         """
         # Simulation
-        self.sim = PhysicsSim(init_pose, init_velocities, init_angle_velocities, runtime) 
+        self.sim = PhysicsSim(init_pose, init_velocities, init_angle_velocities, runtime)
         self.action_repeat = 3
 
         self.state_size = self.action_repeat * 6
@@ -37,7 +37,7 @@ class Task():
         pose_all = []
         for _ in range(self.action_repeat):
             done = self.sim.next_timestep(rotor_speeds) # update the sim pose and velocities
-            reward += self.get_reward() 
+            reward += self.get_reward()
             pose_all.append(self.sim.pose)
         next_state = np.concatenate(pose_all)
         return next_state, reward, done
