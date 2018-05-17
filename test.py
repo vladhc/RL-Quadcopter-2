@@ -74,7 +74,7 @@ with tf.Session() as sess:
                 done = True
 
         if i_episode % save_model_every == 0:
-            saver.save(sess, "./model-{}.ckpt".format(step))
+            saver.save(sess, "./model-{}.ckpt".format(i_episode))
             plt.savefig("./graphs.png")
 
         stat.scalar('episode_reward', total_score)
@@ -85,17 +85,25 @@ with tf.Session() as sess:
 
         plt.clf()
 
-        plt.subplot(311)
+        plt.subplot(321)
         plt.plot(stat.get_history('episode_reward'))
         plt.ylabel('episode_reward')
 
-        plt.subplot(312)
+        plt.subplot(322)
         plt.plot(stat.get_history('q_loss'))
         plt.ylabel('q_loss')
 
-        plt.subplot(313)
+        plt.subplot(323)
         plt.plot(stat.get_history('episode_steps'))
         plt.ylabel('episode_steps')
+
+        plt.subplot(324)
+        plt.plot(stat.get_history('td_err_mean'))
+        plt.ylabel('td_err_mean')
+
+        plt.subplot(325)
+        plt.plot(stat.get_history('td_err_deviation'))
+        plt.ylabel('td_err_deviation')
 
         plt.pause(0.05)
 

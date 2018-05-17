@@ -36,17 +36,19 @@ class QNetwork():
         self.q = tf.layers.dense(x, 1)
 
         self.q_target = tf.placeholder(tf.float32, shape=(None, 1), name='q_target')
+        self.td_err = self.q_target - self.q
         self.q_loss = tf.losses.mean_squared_error(self.q_target, self.q)
 
         self.train_op = tf.train.GradientDescentOptimizer(0.001).minimize(self.q_loss)
 
     def learn(self, states, actions, q_targets):
-        _, q_loss = self.sess.run([self.train_op, self.q_loss], {
+        _, q_loss, td_errs = self.sess.run([self.train_op, self.q_loss, self.td_err], {
             self.state: states,
             self.action: actions,
             self.q_target: q_targets,
         })
         self.stat_collector.scalar('q_loss', q_loss)
+        return td_errs
 
     def get_q(self, states, actions):
         return self.sess.run(self.q, {

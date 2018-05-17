@@ -3,7 +3,7 @@ import numpy as np
 
 from agents.q_network import QNetwork
 from agents.policy_gradient import Policy
-from agents.replay_buffer import ReplayBuffer
+from agents.replay_buffer import ReplayBuffer, Experience
 
 class Agent():
 
@@ -18,9 +18,9 @@ class Agent():
         self.gamma = 0.99 # reward discount rate
 
         # Replay memory
-        self.buffer_size = 100000
+        buffer_size = 100000
         self.batch_size = 64
-        self.memory = ReplayBuffer(self.buffer_size, self.batch_size)
+        self.memory = ReplayBuffer(buffer_size)
 
         self.sess.run(tf.global_variables_initializer())
 
@@ -30,12 +30,12 @@ class Agent():
         return state
 
     def step(self, action, reward, next_state, done):
-        # save experience
-        self.memory.add(self.last_state, action, reward, next_state, done)
+        # Save experience
+        self._save_experience(self.last_state, action, reward, next_state, done)
 
         # Learn, if enough samples are available in memory
         if len(self.memory) > self.batch_size:
-            experiences = self.memory.sample()
+            experiences = self.memory.sample(self.batch_size)
             self._learn_q(experiences)
             self._learn_policy(self.last_state)
 
@@ -70,4 +70,18 @@ class Agent():
 
         # Compute Q targets for current states and train critic model (local)
         Q_targets = rewards + self.gamma * Q_targets_next * (1 - dones)
-        self.q_network.learn(states, actions, Q_targets)
+        td_errs = self.q_network.learn(states, actions, Q_targets)
+
+        self.memory.scrape_stats(self.stats)
+
+    def _save_experience(self, state, action, reward, next_state, done):
+        """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""
+        # Get predicted next-state actions and Q values
+        actions_next = self.actor.act([next_state])
+        Q_target_next = self.q_network.get_q([next_state], actions_next)[0]
+
+        # Compute Q targets for current states and train critic model (local)
+        Q_target = reward + self.gamma * Q_target_next * (1 - done)
+        td_err = self.q_network.learn([state], [action], [Q_target])[0]
+
+        self.memory.add(Experience(state, action, reward, next_state, done), td_err)

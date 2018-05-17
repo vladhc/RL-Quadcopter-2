@@ -13,7 +13,7 @@ Current version has simplified task - learn `MountainCarContinuous-v0` task from
 
 ## Metrics
 
-(./graphs.png)
+![Metrics](./graphs.png)
 
 ## Project Instructions
 
