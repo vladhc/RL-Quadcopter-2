@@ -1,4 +1,3 @@
-import sys
 import tensorflow as tf
 from time import sleep
 
@@ -9,7 +8,7 @@ from car_task import Task
 task = Task()
 stat = StatCollector()
 
-model_file = sys.argv[1]
+model_file = 'model.ckpt'
 # show what agent has learned
 
 with tf.Session() as sess:
@@ -18,14 +17,18 @@ with tf.Session() as sess:
 
     done = False
     state = agent.reset_episode() # start a new episode
+    total_reward = 0
+    steps = 0
 
     while not done:
+        steps += 1
         task.render()
         sleep(0.01)
         action = agent.act(state)
-        _, _, done = task.step(action) 
-        if done:
-            break
-
+        state, reward, done = task.step(action)
+        total_reward += reward
 
 task.close()
+
+print("Total reward:", total_reward)
+print("Steps:", steps)

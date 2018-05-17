@@ -27,12 +27,14 @@ class Policy():
         })
         return actions
 
-    def learn(self, state, score):
+    def learn(self, states, scores):
         self.sess.run(self.reset_delta_theta_op)
-        self.sess.run(self.update_delta_theta_ops, feed_dict={
-            self.state: [state],
-            self.score: score,
-        })
+        for state, score in zip(states, scores):
+            self.sess.run(self.update_delta_theta_ops, feed_dict={
+                self.state: [state],
+                self.score: score,
+                self.batch_size: len(states),
+            })
         self.sess.run(self.update_theta_ops)
         return
 
@@ -54,7 +56,8 @@ class Policy():
         thetas = tf.trainable_variables()
         grad_thetas = tf.gradients(y, thetas)
 
-        self.score = tf.placeholder(tf.float32)
+        self.score = tf.placeholder(tf.float32, name='score')
+        self.batch_size = tf.placeholder(tf.float32, name='batch_size')
 
         delta_theta_vars = []
         update_delta_theta_ops = []
@@ -69,7 +72,7 @@ class Policy():
                         trainable=False)
                 delta_theta_vars.append(delta_theta_var)
 
-                delta_theta = grad_theta * self.score * self.alpha
+                delta_theta = grad_theta * self.score * self.alpha / self.batch_size
                 update_delta_theta_op = tf.assign_add(delta_theta_var, delta_theta)
                 update_delta_theta_ops.append(update_delta_theta_op)
 

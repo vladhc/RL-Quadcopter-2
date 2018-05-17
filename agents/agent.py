@@ -20,8 +20,8 @@ class Agent():
 
         # Exploration noise process
         exploration_mu = 0
-        exploration_theta = 0.05
-        exploration_sigma = 0.05
+        exploration_theta = 0.15
+        exploration_sigma = 0.2
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
@@ -43,8 +43,7 @@ class Agent():
 
         # Learn, if enough samples are available in memory
         if len(self.memory) > self.batch_size:
-            self._learn_q()
-            self._learn_policy(self.last_state)
+            self._learn()
 
         # Roll over last state and action
         self.last_state = next_state
@@ -63,14 +62,7 @@ class Agent():
 
         return action
 
-    def _learn_policy(self, state):
-        # Train actor model
-        actions = self.actor.act([state])
-        score = self.q_network.get_q([state], actions)[0][0]
-        self.stats.scalar('taken_action_score', score)
-        self.actor.learn(state, score)
-
-    def _learn_q(self):
+    def _learn(self):
         """Update policy and value parameters using given batch of experience tuples."""
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         experiences, experience_indexes = self.memory.sample(self.batch_size)
@@ -91,6 +83,10 @@ class Agent():
         self.memory.update_td_err(experience_indexes, td_errs)
 
         self.memory.scrape_stats(self.stats)
+
+        # Train actor model
+        scores = self.q_network.get_q(next_states, actions_next)
+        self.actor.learn(next_states, scores)
 
     def _save_experience(self, state, action, reward, next_state, done):
         """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""
