@@ -21,7 +21,7 @@ class QNetwork():
         logging.debug('state_out', state_out)
 
         # action network
-        x = tf.layers.dense(self.state, hidden_units)
+        x = tf.layers.dense(self.action, hidden_units)
         x = tf.nn.relu(x)
 
         x = tf.layers.dense(x, hidden_units)

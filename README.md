@@ -13,7 +13,11 @@ Current version has simplified task - learn `MountainCarContinuous-v0` task from
 
 ## Metrics
 
+Without priority replay:
 ![Metrics](./graphs.png)
+
+With priority replay:
+![Metrics](./graphs-priority.png)
 
 ## Project Instructions
 
