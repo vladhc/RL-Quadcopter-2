@@ -28,8 +28,7 @@ class StatCollector():
 
     def get_history(self, name):
         scalars = self._scalars[name]
-        scalars = scalars.values()
-        return scalars
+        return scalars.keys(), scalars.values()
 
     def get_range(self, name):
         return self._ranges[name]

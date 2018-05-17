@@ -14,8 +14,8 @@ class Policy():
         self.action_low = task.action_low
         self.action_high = task.action_high
         self.action_range = self.action_high - self.action_low
-        self.alpha = 1e-4 # learning rate
-        self.tau = 1 # for soft update of target parameters
+        self.alpha = 1e-3 # learning rate
+        self.tau = 1.0 # for soft update of target parameters
 
         # create policy network
         self.state, self.action_output = self._create_policy_network()

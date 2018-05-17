@@ -4,6 +4,7 @@ import numpy as np
 from agents.q_network import QNetwork
 from agents.policy_gradient import Policy
 from agents.replay_buffer import ReplayBuffer, Experience
+from agents.ou_noise import OUNoise
 
 class Agent():
 
@@ -17,6 +18,12 @@ class Agent():
 
         self.gamma = 0.99 # reward discount rate
 
+        # Exploration noise process
+        exploration_mu = 0
+        exploration_theta = 0.05
+        exploration_sigma = 0.05
+        self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
+
         # Replay memory
         buffer_size = 100000
         self.batch_size = 64
@@ -25,6 +32,7 @@ class Agent():
         self.sess.run(tf.global_variables_initializer())
 
     def reset_episode(self):
+        self.noise.reset()
         state = self.task.reset()
         self.last_state = state
         return state
@@ -41,10 +49,19 @@ class Agent():
         # Roll over last state and action
         self.last_state = next_state
 
-    def act(self, state):
+    def act(self, state, explore=False):
         """Returns actions for given state(s) as per current policy."""
-        actions = self.actor.act([state]) 
-        return actions[0]
+        action = self.actor.act([state])[0]
+        if explore:
+            action = action + self.noise.sample()
+            action = np.maximum(action, self.task.action_low)
+            action = np.minimum(action, self.task.action_high)
+
+        assert not np.isnan(action)
+        assert np.all(action >= self.task.action_low), "expected less than {:7.3f}, but was {}".format(task.action_low, action)
+        assert np.all(action <= self.task.action_high)
+
+        return action
 
     def _learn_policy(self, state):
         # Train actor model
