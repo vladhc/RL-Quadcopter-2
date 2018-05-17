@@ -23,6 +23,20 @@ with tf.Session() as sess:
     for i_episode in range(1, num_episodes+1):
         stat.tick()
 
+        # Evaluate policy
+        total_score_eval = 0
+        state = agent.reset_episode() # start a new episode
+        done = False
+        step = 0
+
+        while not done:
+            step += 1
+            action = agent.act(state)
+            state, reward, done = task.step(action)
+            total_score_eval += reward
+        stat.scalar('episode_steps_eval', step)
+        stat.scalar('episode_reward_eval', total_score_eval)
+
         # Train policy and Q-Network
         total_score_train = 0
         state = agent.reset_episode() # start a new episode
@@ -43,21 +57,7 @@ with tf.Session() as sess:
         stat.scalar('episode_steps_train', step)
         stat.scalar('episode_reward_train', total_score_train)
 
-        # Evaluate policy
-        total_score_eval = 0
-        state = agent.reset_episode() # start a new episode
-        done = False
-        step = 0
-
-        while not done:
-            step += 1
-            action = agent.act(state)
-            state, reward, done = task.step(action)
-            total_score_eval += reward
-        stat.scalar('episode_steps_eval', step)
-        stat.scalar('episode_reward_eval', total_score_eval)
-
-        print("\rEpisode = {:4d}, score_train = {:7.3f}, score_test = {:7.3f}".format(i_episode, total_score_train, total_score_eval), end="")
+        print('Episode = {:4d}, score_train = {:7.3f}, score_test = {:7.3f}'.format(i_episode, total_score_train, total_score_eval))
         sys.stdout.flush()
 
         plt.clf()

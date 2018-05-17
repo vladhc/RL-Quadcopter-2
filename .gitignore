@@ -2,3 +2,5 @@
 .ipynb_checkpoints/
 data.txt
 todo.txt
+checkpoint
+model.ckpt.*

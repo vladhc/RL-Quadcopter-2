@@ -4,7 +4,7 @@ import numpy as np
 
 class Policy():
 
-    def __init__(self, task, sess):
+    def __init__(self, task, sess, hidden_units=64):
         self.task = task
         self.sess = sess
 
@@ -18,7 +18,7 @@ class Policy():
         self.tau = 1.0 # for soft update of target parameters
 
         # create policy network
-        self.state, self.action_output = self._create_policy_network()
+        self.state, self.action_output = self._create_policy_network(hidden_units)
         self.reset_delta_theta_op, self.update_delta_theta_ops, self.update_theta_ops = self._create_update_network()
 
     def act(self, states):
@@ -38,7 +38,7 @@ class Policy():
         self.sess.run(self.update_theta_ops)
         return
 
-    def _create_policy_network(self, hidden_units=64):
+    def _create_policy_network(self, hidden_units):
         state = tf.placeholder(tf.float32, shape=(None, self.state_size), name='state')
         x = tf.layers.dense(state, hidden_units)
         x = tf.nn.relu(x)

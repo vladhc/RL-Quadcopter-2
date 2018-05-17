@@ -36,6 +36,7 @@ class ReplayBuffer:
         return [self._memory[i] for i in idx], idx
 
     def update_td_err(self, experience_indexes, td_errs):
+        assert not np.any(np.isnan(td_errs))
         self._td_err[experience_indexes] = td_errs
 
     def __len__(self):

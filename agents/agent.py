@@ -13,15 +13,15 @@ class Agent():
         self.task = task
         self.stats = stats
 
-        self.q_network = QNetwork(sess, task.state_size, task.action_size, stats)
-        self.actor = Policy(task, sess)
+        self.q_network = QNetwork(sess, task.state_size, task.action_size, stats, hidden_units=16)
+        self.actor = Policy(task, sess, hidden_units=16)
 
         self.gamma = 0.99 # reward discount rate
 
         # Exploration noise process
         exploration_mu = 0
         exploration_theta = 0.15
-        exploration_sigma = 0.2
+        exploration_sigma = 0.05
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
@@ -51,6 +51,8 @@ class Agent():
     def act(self, state, explore=False):
         """Returns actions for given state(s) as per current policy."""
         action = self.actor.act([state])[0]
+        assert not np.isnan(action)
+
         if explore:
             action = action + self.noise.sample()
             action = np.maximum(action, self.task.action_low)
@@ -67,11 +69,11 @@ class Agent():
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         experiences, experience_indexes = self.memory.sample(self.batch_size)
         action_size = self.task.action_size
-        states = np.vstack([e.state for e in experiences if e is not None])
-        actions = np.array([e.action for e in experiences if e is not None]).astype(np.float32).reshape(-1, action_size)
-        rewards = np.array([e.reward for e in experiences if e is not None]).astype(np.float32).reshape(-1, 1)
-        dones = np.array([e.done for e in experiences if e is not None]).astype(np.uint8).reshape(-1, 1)
-        next_states = np.vstack([e.next_state for e in experiences if e is not None])
+        states = np.vstack([e.state for e in experiences])
+        actions = np.array([e.action for e in experiences]).astype(np.float32).reshape(-1, action_size)
+        rewards = np.array([e.reward for e in experiences]).astype(np.float32).reshape(-1, 1)
+        dones = np.array([e.done for e in experiences]).astype(np.uint8).reshape(-1, 1)
+        next_states = np.vstack([e.next_state for e in experiences])
 
         # Get predicted next-state actions and Q values
         actions_next = self.actor.act(next_states)
