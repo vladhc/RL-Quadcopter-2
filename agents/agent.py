@@ -14,19 +14,19 @@ class Agent():
         self.stats = stats
 
         self.q_network = QNetwork(sess, task.state_size, task.action_size, stats, hidden_units=16)
-        self.actor = Policy(task, sess, hidden_units=16)
+        self.actor = Policy(task, sess, stats, hidden_units=16)
 
         self.gamma = 0.99 # reward discount rate
 
         # Exploration noise process
         exploration_mu = 0
         exploration_theta = 0.15
-        exploration_sigma = 0.05
+        exploration_sigma = 0.10
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
         buffer_size = 100000
-        self.batch_size = 64
+        self.batch_size = 256
         self.memory = ReplayBuffer(buffer_size)
 
         self.sess.run(tf.global_variables_initializer())
@@ -87,8 +87,9 @@ class Agent():
         self.memory.scrape_stats(self.stats)
 
         # Train actor model
-        scores = self.q_network.get_q(next_states, actions_next)
-        self.actor.learn(next_states, scores)
+        actions = self.actor.act(states)
+        action_gradients = self.q_network.get_action_gradients(states, actions)
+        self.actor.learn(states, action_gradients)
 
     def _save_experience(self, state, action, reward, next_state, done):
         """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""

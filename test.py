@@ -91,6 +91,11 @@ with tf.Session() as sess:
         plt.plot(*stat.get_history('td_err_deviation'))
         plt.grid(True)
 
+        plt.subplot(326)
+        plt.title('Actor loss')
+        plt.plot(*stat.get_history('actor_loss'))
+        plt.grid(True)
+
         plt.pause(0.05)
 
         saver.save(sess, "./model.ckpt")

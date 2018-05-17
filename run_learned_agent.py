@@ -23,7 +23,7 @@ with tf.Session() as sess:
     while not done:
         steps += 1
         task.render()
-        sleep(0.01)
+        sleep(0.04)
         action = agent.act(state)
         state, reward, done = task.step(action)
         total_reward += reward
