@@ -21,6 +21,12 @@ With priority replay:
 
 ## Project Instructions
 
+To learn agent:
 ```
 python test.py
+```
+
+To have a look how the learned agent plays:
+```
+python run_learned_agent.py <model-checkpoint-file>
 ```
