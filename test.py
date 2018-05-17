@@ -1,45 +1,20 @@
-import gym
 import numpy as np
-from time import sleep
 import tensorflow as tf
 import sys
 import matplotlib.pyplot as plt
 
 from agents.agent import Agent
 from stat_collector import StatCollector
-
-# More simple task for testing the Agent
-
-class Task():
-
-    def __init__(self):
-        env = gym.make('MountainCarContinuous-v0')
-        self.env = env
-
-        self.state_size = env.observation_space.shape[0]
-        self.action_size = env.action_space.shape[0]
-        self.action_low = env.action_space.low
-        self.action_high = env.action_space.high
-
-    def step(self, action):
-        next_state, reward, done, _ = self.env.step(action)
-        return next_state, reward, done
-
-    def reset(self):
-        """Reset the sim to start a new episode."""
-        state = self.env.reset()
-        return state
+from car_task import Task
 
 
 num_episodes = 1000
-max_steps_per_episode = 200
 save_model_every = 50
 
 task = Task()
+stat = StatCollector()
 
 tf.reset_default_graph()
-
-stat = StatCollector()
 
 
 with tf.Session() as sess:
@@ -69,9 +44,6 @@ with tf.Session() as sess:
             agent.step(action, reward, next_state, done)
             state = next_state
             total_score += reward
-
-            if step >= max_steps_per_episode:
-                done = True
 
         if i_episode % save_model_every == 0:
             saver.save(sess, "./model-{}.ckpt".format(i_episode))
@@ -106,15 +78,5 @@ with tf.Session() as sess:
         plt.ylabel('td_err_deviation')
 
         plt.pause(0.05)
-
-    # show what agent has learned
-    state = env.reset()
-    for _ in range(1000):
-        env.render()
-        sleep(0.01)
-        action = agent.act(state)
-        _, _, done, _ = env.step(action) 
-        if done:
-            break
 
 env.close()
