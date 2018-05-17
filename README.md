@@ -17,12 +17,12 @@ Current version has simplified task - learn `MountainCarContinuous-v0` task from
 
 ## Project Instructions
 
-To learn agent:
+To train agent:
 ```
-python test.py
+python train.py
 ```
 
 To have a look how the learned agent plays:
 ```
-python run_learned_agent.py <model-checkpoint-file>
+python run_agent.py
 ```
