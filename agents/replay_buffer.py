@@ -15,6 +15,7 @@ class ReplayBuffer:
         self._buffer_size = buffer_size
         self._memory = list()
         self._td_err = np.empty([0])
+        self._epsilon = 1e-7
 
     def add(self, exp, td_err):
         """Add a new experience to memory."""
@@ -29,10 +30,13 @@ class ReplayBuffer:
 
     def sample(self, batch_size=64):
         """Randomly sample a batch of experiences from memory."""
-        # TODO: add probablitities
-        # Important: there are negative td_err => np.abs(td_err)
-        idx = np.random.choice(len(self), batch_size, replace=False)
-        return [self._memory[i] for i in idx]
+        p = np.absolute(self._td_err) + self._epsilon
+        p = p / np.sum(p)
+        idx = np.random.choice(len(self), batch_size, replace=False, p=p)
+        return [self._memory[i] for i in idx], idx
+
+    def update_td_err(self, experience_indexes, td_errs):
+        self._td_err[experience_indexes] = td_errs
 
     def __len__(self):
         """Return the current size of internal memory."""

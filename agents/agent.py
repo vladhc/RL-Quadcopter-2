@@ -35,8 +35,7 @@ class Agent():
 
         # Learn, if enough samples are available in memory
         if len(self.memory) > self.batch_size:
-            experiences = self.memory.sample(self.batch_size)
-            self._learn_q(experiences)
+            self._learn_q()
             self._learn_policy(self.last_state)
 
         # Roll over last state and action
@@ -54,9 +53,10 @@ class Agent():
         self.stats.scalar('taken_action_score', score)
         self.actor.learn(state, score)
 
-    def _learn_q(self, experiences):
+    def _learn_q(self):
         """Update policy and value parameters using given batch of experience tuples."""
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
+        experiences, experience_indexes = self.memory.sample(self.batch_size)
         action_size = self.task.action_size
         states = np.vstack([e.state for e in experiences if e is not None])
         actions = np.array([e.action for e in experiences if e is not None]).astype(np.float32).reshape(-1, action_size)
@@ -71,6 +71,7 @@ class Agent():
         # Compute Q targets for current states and train critic model (local)
         Q_targets = rewards + self.gamma * Q_targets_next * (1 - dones)
         td_errs = self.q_network.learn(states, actions, Q_targets)
+        self.memory.update_td_err(experience_indexes, td_errs)
 
         self.memory.scrape_stats(self.stats)
 
@@ -82,6 +83,6 @@ class Agent():
 
         # Compute Q targets for current states and train critic model (local)
         Q_target = reward + self.gamma * Q_target_next * (1 - done)
-        td_err = self.q_network.learn([state], [action], [Q_target])[0]
+        td_err = self.q_network.learn([state], [action], [Q_target])
 
         self.memory.add(Experience(state, action, reward, next_state, done), td_err)

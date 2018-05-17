@@ -36,7 +36,7 @@ class QNetwork():
         self.q = tf.layers.dense(x, 1)
 
         self.q_target = tf.placeholder(tf.float32, shape=(None, 1), name='q_target')
-        self.td_err = self.q_target - self.q
+        self.td_err = tf.squeeze(self.q_target - self.q)
         self.q_loss = tf.losses.mean_squared_error(self.q_target, self.q)
 
         self.train_op = tf.train.GradientDescentOptimizer(0.001).minimize(self.q_loss)
