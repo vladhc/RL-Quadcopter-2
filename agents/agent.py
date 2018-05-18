@@ -13,8 +13,12 @@ class Agent():
         self.task = task
         self.stats = stats
 
-        self.q_network = QNetwork(sess, task.state_size, task.action_size, stats, hidden_units=16)
-        self.actor = Policy(task, sess, stats, hidden_units=16)
+        self.q_network = QNetwork(
+                sess, task, stats,
+                hidden_units=20, dropout_rate=0.1)
+        self.actor = Policy(
+                sess, task, stats,
+                hidden_units=20, dropout_rate=0.1)
 
         self.gamma = 0.99 # reward discount rate
 
@@ -42,8 +46,7 @@ class Agent():
         self._save_experience(self.last_state, action, reward, next_state, done)
 
         # Learn, if enough samples are available in memory
-        if len(self.memory) > self.batch_size:
-            self.learn()
+        self.learn()
 
         # Roll over last state and action
         self.last_state = next_state
@@ -66,6 +69,10 @@ class Agent():
 
     def learn(self):
         """Update policy and value parameters using given batch of experience tuples."""
+
+        if len(self.memory) < self.batch_size:
+            return
+
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         experiences, experience_indexes = self.memory.sample(self.batch_size)
         action_size = self.task.action_size

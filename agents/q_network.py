@@ -3,29 +3,35 @@ import logging
 
 class QNetwork():
 
-    def __init__(self, sess, state_size, action_size, stat_collector, name='critic', hidden_units=64):
+    def __init__(self, sess, task, stat_collector, name='critic', hidden_units=64, dropout_rate=0.2):
         self.sess = sess
         self.stat_collector = stat_collector
         self.name = name
 
+        action_range = task.action_high - task.action_low
+        action_med = (task.action_low + task.action_high) / 2
+
         # Create network
         with tf.variable_scope(name):
-            self.state = tf.placeholder(tf.float32, shape=(None, state_size), name='state')
-            self.action = tf.placeholder(tf.float32, shape=(None, action_size), name='action')
+            self.state = tf.placeholder(tf.float32, shape=(None, task.state_size), name='state')
+            self.action = tf.placeholder(tf.float32, shape=(None, task.action_size), name='action')
             self.is_training = tf.placeholder(tf.bool, name='is_training')
 
             # State stream
-            x = self.state
-            x = tf.layers.dense(x, hidden_units)
+            x = tf.layers.dense(self.state, hidden_units)
             x = tf.nn.leaky_relu(x)
+
+            x = tf.layers.dropout(x, training=self.is_training, rate=dropout_rate)
 
             x = tf.layers.dense(x, hidden_units)
             state_out = tf.nn.leaky_relu(x)
 
             # Action stream
-            x = self.action
+            x = (self.action - action_med) / action_range # normalization
             x = tf.layers.dense(x, hidden_units)
             x = tf.nn.leaky_relu(x)
+
+            x = tf.layers.dropout(x, training=self.is_training, rate=dropout_rate)
 
             x = tf.layers.dense(x, hidden_units)
             action_out = tf.nn.leaky_relu(x)
@@ -34,6 +40,8 @@ class QNetwork():
             x = state_out
             x = tf.layers.dense(x, hidden_units)
             x = tf.nn.leaky_relu(x)
+
+            x = tf.layers.dropout(x, training=self.is_training, rate=dropout_rate)
 
             self.v = tf.layers.dense(x, 1)
 
@@ -65,10 +73,8 @@ class QNetwork():
             self.q_loss = tf.losses.mean_squared_error(self.q_target, self.q)
             self.advantage_loss = tf.losses.mean_squared_error(self.advantage_target, self.advantage)
 
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         thetas = tf.trainable_variables(scope=self.name)
-        with tf.control_dependencies(update_ops):
-            self.train_op = tf.train.AdamOptimizer().minimize(
+        self.train_op = tf.train.AdamOptimizer().minimize(
                     self.q_loss,
                     var_list=thetas)
 
@@ -93,7 +99,8 @@ class QNetwork():
                 feed_dict={
                     self.state: states,
                     self.action: actions,
-                    self.q_target: q_targets
+                    self.q_target: q_targets,
+                    self.is_training: False,
                     })
         return td_errs
 
