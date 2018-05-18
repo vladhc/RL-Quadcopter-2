@@ -29,9 +29,8 @@ class Agent():
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
-        buffer_size = 100000
         self.batch_size = 256
-        self.memory = ReplayBuffer(buffer_size)
+        self.memory = ReplayBuffer(buffer_size=10000, decay_steps=100)
 
         self.sess.run(tf.global_variables_initializer())
 
@@ -39,6 +38,7 @@ class Agent():
         self.noise.reset()
         state = self.task.reset()
         self.last_state = state
+        self.memory.decay_a()
         return state
 
     def step(self, action, reward, next_state, done):
