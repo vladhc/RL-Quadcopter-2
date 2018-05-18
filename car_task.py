@@ -13,9 +13,10 @@ class Task():
         self.action_high = env.action_space.high
 
     def step(self, action):
-        self.env.step(action)
-        self.env.step(action)
-        next_state, reward, done, _ = self.env.step(action)
+        for _ in range(3):
+            next_state, reward, done, _ = self.env.step(action)
+            if done:
+                return next_state, reward, done
         return next_state, reward, done
 
     def reset(self):

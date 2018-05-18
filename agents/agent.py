@@ -21,7 +21,7 @@ class Agent():
         # Exploration noise process
         exploration_mu = 0
         exploration_theta = 0.15
-        exploration_sigma = 0.10
+        exploration_sigma = 0.15
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
@@ -43,7 +43,7 @@ class Agent():
 
         # Learn, if enough samples are available in memory
         if len(self.memory) > self.batch_size:
-            self._learn()
+            self.learn()
 
         # Roll over last state and action
         self.last_state = next_state
@@ -64,7 +64,7 @@ class Agent():
 
         return action
 
-    def _learn(self):
+    def learn(self):
         """Update policy and value parameters using given batch of experience tuples."""
         # Convert experience tuples to separate arrays for each element (states, actions, rewards, etc.)
         experiences, experience_indexes = self.memory.sample(self.batch_size)
@@ -75,13 +75,14 @@ class Agent():
         dones = np.array([e.done for e in experiences]).astype(np.uint8).reshape(-1, 1)
         next_states = np.vstack([e.next_state for e in experiences])
 
-        # Get predicted next-state actions and Q values
+        # Get predicted next-state actions, Q and V values
         actions_next = self.actor.act(next_states)
-        Q_targets_next = self.q_network.get_q(next_states, actions_next)
+        Q_targets_next, V_targets_next = self.q_network.get_q_and_v(next_states, actions_next)
 
         # Compute Q targets for current states and train critic model (local)
         Q_targets = rewards + self.gamma * Q_targets_next * (1 - dones)
-        td_errs = self.q_network.learn(states, actions, Q_targets)
+        V_targets = rewards + self.gamma * V_targets_next * (1 - dones)
+        td_errs = self.q_network.learn(states, actions, Q_targets, V_targets)
         self.memory.update_td_err(experience_indexes, td_errs)
 
         self.memory.scrape_stats(self.stats)
@@ -95,10 +96,11 @@ class Agent():
         """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""
         # Get predicted next-state actions and Q values
         actions_next = self.actor.act([next_state])
-        Q_target_next = self.q_network.get_q([next_state], actions_next)[0]
+        Q_targets_next, V_targets_next = self.q_network.get_q_and_v([next_state], actions_next)
+        Q_target_next, V_target_next = Q_targets_next[0], V_targets_next[0]
 
-        # Compute Q targets for current states and train critic model (local)
         Q_target = reward + self.gamma * Q_target_next * (1 - done)
-        td_err = self.q_network.learn([state], [action], [Q_target])
+        V_target = reward + self.gamma * V_target_next * (1 - done)
+        td_err = self.q_network.learn([state], [action], [Q_target], [V_target])
 
         self.memory.add(Experience(state, action, reward, next_state, done), td_err)

@@ -33,13 +33,15 @@ def _plot_smoothed(stat, metric, color='C0', label=None):
     x, y = stat.get_history(metric)
     plt.plot(x, y, alpha=0.3, color=color)
     df = pd.DataFrame(data={'y': list(y)}, index=x)
-    w = df.rolling(5).mean()
+    w = df.rolling(8).mean()
     plt.plot(df.index, w, label=label, color=color)
 
 
 def plot_training_graphs(stat):
 
     plt.clf()
+
+    plt.subplots_adjust(top=.9, bottom=0.1, wspace=0.2, hspace=0.2)
 
     plt.subplot(321)
     plt.title('Episode reward')
@@ -54,20 +56,20 @@ def plot_training_graphs(stat):
     plt.grid(True)
 
     plt.subplot(323)
-    plt.title('Steps')
+    plt.title('Episode Steps')
     _plot_smoothed(stat, 'episode_steps_train', label='Train')
     plt.plot(*stat.get_history('episode_steps_eval'), label='Eval', color='C1')
     plt.grid(True)
     plt.legend()
 
     plt.subplot(324)
-    plt.title('ReplayBuffer TD error mean')
-    plt.plot(*stat.get_history('td_err_mean'))
+    plt.title('V Loss')
+    _plot_smoothed(stat, 'v_loss')
     plt.grid(True)
 
     plt.subplot(325)
-    plt.title('ReplayBuffer TD error deviation')
-    plt.plot(*stat.get_history('td_err_deviation'))
+    plt.title('ReplayBuffer TD error mean')
+    _plot_smoothed(stat, 'td_err_mean')
     plt.grid(True)
 
     plt.subplot(326)

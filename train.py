@@ -12,6 +12,7 @@ from utils import run_episode, plot_training_graphs
 num_episodes = 1000
 evaluate_every = 10
 model_file = './model.ckpt'
+max_steps = -1
 
 with tf.Session() as sess:
 
@@ -30,6 +31,13 @@ with tf.Session() as sess:
         stat.scalar('episode_steps_train', steps)
         stat.scalar('episode_reward_train', score)
         print('Episode = {:4d}, score train = {:7.3f}'.format(i_episode, score))
+
+        # When episode is finished earlier, then the agent runs less learn cycles.
+        # In order to compensate it, we add extra learn cycles.
+        max_steps = max(max_steps, steps)
+        while steps < max_steps:
+            steps += 1
+            agent.learn()
 
         # Evaluate policy
         if i_episode % evaluate_every == 0:

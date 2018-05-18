@@ -5,8 +5,8 @@ Current version has simplified task - learn `MountainCarContinuous-v0` task from
 
 ## Features
 
-* Simple Q-Network as an Agent Critic;
-* Simple Policy;
+* Dueling Q-Network as an Actor Critic;
+* Simple Policy as an Actor;
 * Replay Buffer with priority replay. When sampling from it, Q-Network doesn't take into account that some samples are fetched more often;
 * Statistics visualization;
 * Tensorflow implementation.
