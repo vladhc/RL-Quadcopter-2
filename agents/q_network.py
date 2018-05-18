@@ -3,7 +3,11 @@ import logging
 
 class QNetwork():
 
-    def __init__(self, sess, task, stat_collector, name='critic', hidden_units=64, dropout_rate=0.2):
+    def __init__(self, sess, task, stat_collector,
+            name='critic',
+            hidden_units=64,
+            dropout_rate=0.2,
+            learning_rate=1e-4):
         self.sess = sess
         self.stat_collector = stat_collector
         self.name = name
@@ -74,7 +78,7 @@ class QNetwork():
             self.advantage_loss = tf.losses.mean_squared_error(self.advantage_target, self.advantage)
 
         thetas = tf.trainable_variables(scope=self.name)
-        self.train_op = tf.train.AdamOptimizer().minimize(
+        self.train_op = tf.train.RMSPropOptimizer(learning_rate).minimize(
                     self.q_loss,
                     var_list=thetas)
 

@@ -4,7 +4,11 @@ import numpy as np
 
 class Policy():
 
-    def __init__(self, sess, task, stats, name='actor', hidden_units=64, dropout_rate=0.2):
+    def __init__(self, sess, task, stats,
+            name='actor',
+            hidden_units=64,
+            dropout_rate=0.6,
+            learning_rate=1e-4):
         self.task = task
         self.sess = sess
         self.stats = stats
@@ -20,7 +24,7 @@ class Policy():
         # create policy network
         with tf.variable_scope(name):
             self._create_policy_network(hidden_units, dropout_rate)
-            self._create_update_network()
+            self._create_update_network(learning_rate)
 
     def act(self, states, explore=False):
         actions = self.sess.run(self.action_output, feed_dict={
@@ -60,9 +64,9 @@ class Policy():
         output = tf.nn.sigmoid(logits)
         self.action_output = output * self.action_range + self.action_low
 
-    def _create_update_network(self):
+    def _create_update_network(self, learning_rate):
         self.action_gradients = tf.placeholder(tf.float32, (None, self.action_size), name='action_gradients')
         dAdvantage_dTheta = self.action_gradients * self.action_output
         self.loss = -tf.reduce_mean(dAdvantage_dTheta)
         theta = tf.trainable_variables(scope=self.name)
-        self.train_op = tf.train.AdamOptimizer().minimize(self.loss, var_list=theta)
+        self.train_op = tf.train.RMSPropOptimizer(learning_rate).minimize(self.loss, var_list=theta)

@@ -1,6 +1,5 @@
 import numpy as np
 from physics_sim import PhysicsSim
-from scene import Scene
 
 class Task():
     """Task (environment) that defines the goal and provides feedback to the agent."""
@@ -85,5 +84,6 @@ class Task():
 
     def render(self):
         if not hasattr(self, 'scene'):
+            from scene import Scene
             self.scene = Scene(self.sim, self.target_pos)
         self.scene.update(self.sim.pose)
