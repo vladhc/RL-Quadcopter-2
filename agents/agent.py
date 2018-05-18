@@ -96,11 +96,10 @@ class Agent():
         """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""
         # Get predicted next-state actions and Q values
         actions_next = self.actor.act([next_state])
-        Q_targets_next, V_targets_next = self.q_network.get_q_and_v([next_state], actions_next)
-        Q_target_next, V_target_next = Q_targets_next[0], V_targets_next[0]
+        Q_targets_next, _ = self.q_network.get_q_and_v([next_state], actions_next)
+        Q_target_next = Q_targets_next[0]
 
         Q_target = reward + self.gamma * Q_target_next * (1 - done)
-        V_target = reward + self.gamma * V_target_next * (1 - done)
-        td_err = self.q_network.learn([state], [action], [Q_target], [V_target])
+        td_err = self.q_network.get_td_err([state], [action], [Q_target])
 
         self.memory.add(Experience(state, action, reward, next_state, done), td_err)

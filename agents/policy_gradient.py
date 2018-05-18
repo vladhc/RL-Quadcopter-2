@@ -56,8 +56,8 @@ class Policy():
 
     def _create_update_network(self):
         action_gradients = tf.placeholder(tf.float32, (None, self.action_size), name='action_gradients')
-        dq_dtheta = action_gradients * self.action_output
-        loss = -tf.reduce_mean(dq_dtheta)
+        dAdvantage_dTheta = action_gradients * self.action_output
+        loss = -tf.reduce_mean(dAdvantage_dTheta)
         theta = tf.trainable_variables(scope=self.name)
         train_op = tf.train.AdamOptimizer().minimize(loss, var_list=theta)
 

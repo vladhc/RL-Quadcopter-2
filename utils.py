@@ -51,8 +51,8 @@ def plot_training_graphs(stat):
     plt.legend()
 
     plt.subplot(322)
-    plt.title('Q Loss')
-    _plot_smoothed(stat, 'q_loss')
+    plt.title('Advantage Loss')
+    _plot_smoothed(stat, 'advantage_loss')
     plt.grid(True)
 
     plt.subplot(323)
