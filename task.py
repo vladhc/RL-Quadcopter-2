@@ -24,7 +24,7 @@ class Task():
         self.action_size = 4
 
         # Goal
-        self.target_pos = target_pos if target_pos is not None else np.array([0., 0., 10.]) 
+        self.target_pos = target_pos if target_pos is not None else np.array([0., 0., 10.])
 
         # For states preprocessing
         init_pose = self.sim.pose
@@ -34,8 +34,8 @@ class Task():
     def get_reward(self):
         """Uses current pose of sim to return reward."""
         dist_from_target = np.linalg.norm(self.target_pos - self.sim.pose[:3])
-        dist_reward = 1.0 - np.abs(np.tanh(dist_from_target / 10.0))
-        time_reward = 0.2
+        dist_reward = 1.0 - np.tanh(dist_from_target / 3.0)
+        time_reward = 0.1
         reward = time_reward + dist_reward
         return reward
 
@@ -46,7 +46,7 @@ class Task():
         for _ in range(self.action_repeat):
             done = self.sim.next_timestep(rotor_speeds) # update the sim pose and velocities
             reward += self.get_reward()
-            pose_all.append(self.sim.pose)
+            pose_all.append(np.copy(self.sim.pose))
             # Early exit, so we won't pollute pose_all with non-valid states
             if done:
                 break
@@ -56,7 +56,7 @@ class Task():
 
     def _preprocess_pose(self, pose_all):
         while len(pose_all) < self.action_repeat:
-            pose_all.append(pose_all[-1])
+            pose_all.append(np.copy(pose_all[-1]))
         velocity1 = pose_all[1] - pose_all[0]
         velocity2 = pose_all[2] - pose_all[1]
         acc = velocity2 - velocity1
@@ -64,7 +64,7 @@ class Task():
             # (0,0,0) is a target_pos
             coords_relative_to_target = self.target_pos - pose[:3]
             # normalize angles
-            angles = pose[3:]
+            angles = np.copy(pose[3:])
             angles /= (2 * np.pi)
             state = np.copy(pose)
             state[:3] = coords_relative_to_target

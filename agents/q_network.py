@@ -27,7 +27,8 @@ class QNetwork():
 
             x = tf.layers.dropout(x, training=self.is_training, rate=dropout_rate)
 
-            x = tf.layers.dense(x, hidden_units)
+            x = tf.layers.dense(x, hidden_units, use_bias=False)
+            x = tf.layers.batch_normalization(x, training=self.is_training)
             state_out = tf.nn.leaky_relu(x)
 
             # Action stream
@@ -37,7 +38,8 @@ class QNetwork():
 
             x = tf.layers.dropout(x, training=self.is_training, rate=dropout_rate)
 
-            x = tf.layers.dense(x, hidden_units)
+            x = tf.layers.dense(x, hidden_units, use_bias=False)
+            x = tf.layers.batch_normalization(x, training=self.is_training)
             action_out = tf.nn.leaky_relu(x)
 
             # State stream → V
@@ -51,6 +53,10 @@ class QNetwork():
 
             # State stream and Action stream → Advantage
             x = tf.concat([state_out, action_out], 1)
+
+            x = tf.layers.dense(x, hidden_units, use_bias=False)
+            x = tf.layers.batch_normalization(x, training=self.is_training)
+            x = tf.nn.leaky_relu(x)
 
             x = tf.layers.dense(x, hidden_units)
             x = tf.nn.leaky_relu(x)
@@ -78,7 +84,7 @@ class QNetwork():
             self.advantage_loss = tf.losses.mean_squared_error(self.advantage_target, self.advantage)
 
         thetas = tf.trainable_variables(scope=self.name)
-        self.train_op = tf.train.RMSPropOptimizer(learning_rate).minimize(
+        self.train_op = tf.train.AdamOptimizer(learning_rate).minimize(
                     self.q_loss,
                     var_list=thetas)
 

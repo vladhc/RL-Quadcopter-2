@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
@@ -12,12 +13,14 @@ from utils import run_episode, plot_training_graphs
 num_episodes = 1000
 evaluate_every = 10
 model_file = './model.ckpt'
-max_steps = -1
 
 with tf.Session() as sess:
 
     # Setup
-    task = Task()
+    task = Task(
+            init_pose= np.array([0., 0., 10., 0., 0., 0.]),
+            target_pos = np.array([0., 0., 10.]),
+            )
     stat = StatCollector()
     agent = Agent(task, sess, stat)
     saver = tf.train.Saver()

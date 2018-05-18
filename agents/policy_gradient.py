@@ -22,7 +22,7 @@ class Policy():
         self.action_range = self.action_high - self.action_low
 
         # create policy network
-        with tf.variable_scope(name):
+        with tf.variable_scope(name, reuse=False):
             self._create_policy_network(hidden_units, dropout_rate)
             self._create_update_network(learning_rate)
 
@@ -69,4 +69,4 @@ class Policy():
         dAdvantage_dTheta = self.action_gradients * self.action_output
         self.loss = -tf.reduce_mean(dAdvantage_dTheta)
         theta = tf.trainable_variables(scope=self.name)
-        self.train_op = tf.train.RMSPropOptimizer(learning_rate).minimize(self.loss, var_list=theta)
+        self.train_op = tf.train.AdamOptimizer(learning_rate).minimize(self.loss, var_list=theta)

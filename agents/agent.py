@@ -13,7 +13,8 @@ class Agent():
         self.task = task
         self.stats = stats
 
-        tau = 0.05
+        tau = 0.01
+        learning_rate = 2e-4
 
         self.critic_local = QNetwork(
                 sess, task, stats, name='critic_local',
@@ -23,10 +24,10 @@ class Agent():
                 hidden_units=64, dropout_rate=0.2)
         self.actor_local = Policy(
                 sess, task, stats, name='actor_local',
-                hidden_units=64, dropout_rate=0.75)
+                hidden_units=32, dropout_rate=0.2)
         self.actor_target = Policy(
                 sess, task, stats, name='actor_target',
-                hidden_units=64, dropout_rate=0.75)
+                hidden_units=32, dropout_rate=0.2)
         soft_copy_critic_ops = self._create_soft_copy_op(
                 'critic_local', 'critic_target',
                 tau=tau)
@@ -37,16 +38,16 @@ class Agent():
         self._soft_copy_ops.extend(soft_copy_critic_ops)
         self._soft_copy_ops.extend(soft_copy_actor_ops)
 
-        self.gamma = 0.7 # reward discount rate
+        self.gamma = 0.99 # reward discount rate
 
         # Exploration noise process
         exploration_mu = 0
         exploration_theta = 0.15
-        exploration_sigma = 0.25
+        exploration_sigma = 0.15
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
-        self.batch_size = 128
+        self.batch_size = 256
         self.memory = ReplayBuffer(buffer_size=10000, decay_steps=1000)
 
         self.sess.run(tf.global_variables_initializer())
