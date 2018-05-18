@@ -21,6 +21,6 @@ class OUNoise:
         dx = self.theta * (self.mu - x) + self.sigma * np.random.randn(len(x))
         self.state = x + dx
 
-        assert not np.isnan(self.state)
+        assert not np.any(np.isnan(self.state))
 
         return self.state

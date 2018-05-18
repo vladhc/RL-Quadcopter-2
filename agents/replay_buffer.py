@@ -11,13 +11,18 @@ class ReplayBuffer:
         Params
         ======
             buffer_size: maximum size of buffer
+            decay_steps: how much steps does it take to start pure random sampling.
+                         If None, 'a' won't decay and sampling will be always by priority.
         """
         self._buffer_size = buffer_size
         self._memory = list()
         self._td_err = np.empty([0])
         self._epsilon = 1e-7
         self._a = 1.0 # when 0 → pure random, when 1 → td_err determines the sampling probability
-        self._a_drop_step = self._a / float(decay_steps)
+        if not decay_steps is None:
+            self._a_drop_step = self._a / float(decay_steps)
+        else:
+            self._a_drop_step = 0.0
 
     def decay_a(self):
         self._a -= self._a_drop_step

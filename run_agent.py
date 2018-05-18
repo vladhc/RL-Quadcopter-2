@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from agents.agent import Agent
 from stat_collector import StatCollector
-from car_task import Task
+from task import Task
 from utils import run_episode
 
 
@@ -13,9 +13,11 @@ with tf.Session() as sess:
     task = Task()
     agent = Agent(task, sess, StatCollector())
     tf.train.Saver().restore(sess, model_file)
-    score, steps = run_episode(sess, agent, task, train=False, render=True)
+    while True:
+        task.reset()
+        score, steps = run_episode(sess, agent, task, train=False, render=True)
 
-    print("Total reward:", score)
-    print("Steps:", steps)
+        print("Total reward:", score)
+        print("Steps:", steps)
 
 task.close()

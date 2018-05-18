@@ -48,11 +48,13 @@ def plot_training_graphs(stat):
     _plot_smoothed(stat, 'episode_reward_train', label='Train')
     plt.plot(*stat.get_history('episode_reward_eval'), label='Eval', color='C1')
     plt.grid(True)
+    plt.yscale('symlog')
     plt.legend()
 
     plt.subplot(322)
     plt.title('Advantage Loss')
     _plot_smoothed(stat, 'advantage_loss')
+    plt.yscale('log')
     plt.grid(True)
 
     plt.subplot(323)
@@ -60,11 +62,13 @@ def plot_training_graphs(stat):
     _plot_smoothed(stat, 'episode_steps_train', label='Train')
     plt.plot(*stat.get_history('episode_steps_eval'), label='Eval', color='C1')
     plt.grid(True)
+    plt.yscale('log')
     plt.legend()
 
     plt.subplot(324)
     plt.title('V Loss')
     _plot_smoothed(stat, 'v_loss')
+    plt.yscale('log')
     plt.grid(True)
 
     plt.subplot(325)

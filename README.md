@@ -1,7 +1,6 @@
 # Deep RL Quadcopter Controller
 
 In this project, I'm trying to design an agent to fly a quadcopter, and then train it using a reinforcement learning algorithm.
-Current version has simplified task - learn `MountainCarContinuous-v0` task from ai-gym.
 
 ## Features
 

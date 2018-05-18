@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from agents.agent import Agent
 from stat_collector import StatCollector
-from car_task import Task
+from task import Task
 from utils import run_episode, plot_training_graphs
 
 
@@ -30,21 +30,14 @@ with tf.Session() as sess:
         score, steps = run_episode(sess, agent, task, train=True)
         stat.scalar('episode_steps_train', steps)
         stat.scalar('episode_reward_train', score)
-        print('Episode = {:4d}, score train = {:7.3f}'.format(i_episode, score))
-
-        # When episode is finished earlier, then the agent runs less learn cycles.
-        # In order to compensate it, we add extra learn cycles.
-        max_steps = max(max_steps, steps)
-        while steps < max_steps:
-            steps += 1
-            agent.learn()
+        print('Episode = {:4d}, score train = {:7.3f}, steps = {}'.format(i_episode, score, steps))
 
         # Evaluate policy
         if i_episode % evaluate_every == 0:
             score, steps = run_episode(sess, agent, task, train=False)
             stat.scalar('episode_steps_eval', steps)
             stat.scalar('episode_reward_eval', score)
-            print('Episode = {:4d},  score eval = {:7.3f}'.format(i_episode, score))
+            print('Episode = {:4d},  score eval = {:7.3f}, steps = {}'.format(i_episode, score, steps))
             saver.save(sess, model_file)
 
         plot_training_graphs(stat)

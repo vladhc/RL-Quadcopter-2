@@ -17,16 +17,16 @@ class Agent():
 
         self.critic_local = QNetwork(
                 sess, task, stats, name='critic_local',
-                hidden_units=20, dropout_rate=0.1)
+                hidden_units=128, dropout_rate=0.3)
         self.critic_target = QNetwork(
                 sess, task, stats, name='critic_target',
-                hidden_units=20, dropout_rate=0.1)
+                hidden_units=128, dropout_rate=0.3)
         self.actor_local = Policy(
                 sess, task, stats, name='actor_local',
-                hidden_units=28, dropout_rate=0.85)
+                hidden_units=64, dropout_rate=0.75)
         self.actor_target = Policy(
                 sess, task, stats, name='actor_target',
-                hidden_units=28, dropout_rate=0.85)
+                hidden_units=64, dropout_rate=0.75)
         soft_copy_critic_ops = self._create_soft_copy_op(
                 'critic_local', 'critic_target',
                 tau=tau)
@@ -42,12 +42,12 @@ class Agent():
         # Exploration noise process
         exploration_mu = 0
         exploration_theta = 0.15
-        exploration_sigma = 0.15
+        exploration_sigma = 0.3
         self.noise = OUNoise(task.action_size, exploration_mu, exploration_theta, exploration_sigma)
 
         # Replay memory
         self.batch_size = 256
-        self.memory = ReplayBuffer(buffer_size=10000, decay_steps=2000)
+        self.memory = ReplayBuffer(buffer_size=10000, decay_steps=500)
 
         self.sess.run(tf.global_variables_initializer())
 
@@ -72,14 +72,14 @@ class Agent():
         """Returns actions for given state(s) as per current policy."""
         actor = self.actor_local if explore else self.actor_target
         action = actor.act([state], explore)[0]
-        assert not np.isnan(action)
+        assert not np.any(np.isnan(action))
 
         if explore:
             action = action + self.noise.sample()
             action = np.maximum(action, self.task.action_low)
             action = np.minimum(action, self.task.action_high)
 
-        assert not np.isnan(action)
+        assert not np.any(np.isnan(action))
         assert np.all(action >= self.task.action_low), "expected less than {:7.3f}, but was {}".format(task.action_low, action)
         assert np.all(action <= self.task.action_high)
 
