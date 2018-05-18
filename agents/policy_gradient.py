@@ -22,10 +22,10 @@ class Policy():
             self._create_policy_network(hidden_units, dropout_rate)
             self._create_update_network()
 
-    def act(self, states):
+    def act(self, states, explore=False):
         actions = self.sess.run(self.action_output, feed_dict={
             self.state: states,
-            self.is_training: False,
+            self.is_training: explore,
         })
         return actions
 

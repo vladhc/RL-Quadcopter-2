@@ -13,12 +13,29 @@ class Agent():
         self.task = task
         self.stats = stats
 
-        self.q_network = QNetwork(
-                sess, task, stats,
+        tau = 0.01
+
+        self.critic_local = QNetwork(
+                sess, task, stats, name='critic_local',
                 hidden_units=20, dropout_rate=0.1)
-        self.actor = Policy(
-                sess, task, stats,
+        self.critic_target = QNetwork(
+                sess, task, stats, name='critic_target',
                 hidden_units=20, dropout_rate=0.1)
+        self.actor_local = Policy(
+                sess, task, stats, name='actor_local',
+                hidden_units=28, dropout_rate=0.85)
+        self.actor_target = Policy(
+                sess, task, stats, name='actor_target',
+                hidden_units=28, dropout_rate=0.85)
+        soft_copy_critic_ops = self._create_soft_copy_op(
+                'critic_local', 'critic_target',
+                tau=tau)
+        soft_copy_actor_ops = self._create_soft_copy_op(
+                'actor_local', 'actor_target',
+                tau=tau)
+        self._soft_copy_ops = []
+        self._soft_copy_ops.extend(soft_copy_critic_ops)
+        self._soft_copy_ops.extend(soft_copy_actor_ops)
 
         self.gamma = 0.99 # reward discount rate
 
@@ -30,7 +47,7 @@ class Agent():
 
         # Replay memory
         self.batch_size = 256
-        self.memory = ReplayBuffer(buffer_size=10000, decay_steps=100)
+        self.memory = ReplayBuffer(buffer_size=10000, decay_steps=2000)
 
         self.sess.run(tf.global_variables_initializer())
 
@@ -53,7 +70,8 @@ class Agent():
 
     def act(self, state, explore=False):
         """Returns actions for given state(s) as per current policy."""
-        action = self.actor.act([state])[0]
+        actor = self.actor_local if explore else self.actor_target
+        action = actor.act([state], explore)[0]
         assert not np.isnan(action)
 
         if explore:
@@ -83,30 +101,46 @@ class Agent():
         next_states = np.vstack([e.next_state for e in experiences])
 
         # Get predicted next-state actions, Q and V values
-        actions_next = self.actor.act(next_states)
-        Q_targets_next, V_targets_next = self.q_network.get_q_and_v(next_states, actions_next)
+        actions_next = self.actor_target.act(next_states)
+        Q_targets_next, V_targets_next = self.critic_target.get_q_and_v(next_states, actions_next)
 
         # Compute Q targets for current states and train critic model (local)
         Q_targets = rewards + self.gamma * Q_targets_next * (1 - dones)
         V_targets = rewards + self.gamma * V_targets_next * (1 - dones)
-        td_errs = self.q_network.learn(states, actions, Q_targets, V_targets)
+        td_errs = self.critic_local.learn(states, actions, Q_targets, V_targets)
+
         self.memory.update_td_err(experience_indexes, td_errs)
 
         self.memory.scrape_stats(self.stats)
 
         # Train actor model
-        actions = self.actor.act(states)
-        action_gradients = self.q_network.get_action_gradients(states, actions)
-        self.actor.learn(states, action_gradients)
+        actions = self.actor_target.act(states)
+        action_gradients = self.critic_target.get_action_gradients(states, actions)
+        self.actor_local.learn(states, action_gradients)
+
+        self._soft_copy()
 
     def _save_experience(self, state, action, reward, next_state, done):
         """Adds experience into ReplayBuffer. As a side effect, also learns q network on this sample."""
         # Get predicted next-state actions and Q values
-        actions_next = self.actor.act([next_state])
-        Q_targets_next, _ = self.q_network.get_q_and_v([next_state], actions_next)
+        actions_next = self.actor_local.act([next_state])
+        Q_targets_next, _ = self.critic_local.get_q_and_v([next_state], actions_next)
         Q_target_next = Q_targets_next[0]
 
         Q_target = reward + self.gamma * Q_target_next * (1 - done)
-        td_err = self.q_network.get_td_err([state], [action], [Q_target])
+        td_err = self.critic_local.get_td_err([state], [action], [Q_target])
 
         self.memory.add(Experience(state, action, reward, next_state, done), td_err)
+
+    def _soft_copy(self):
+        self.sess.run(self._soft_copy_ops)
+
+    def _create_soft_copy_op(self, scope_src, scope_dst, tau=0.01):
+        var_src = tf.trainable_variables(scope=scope_src)
+        var_dst = tf.trainable_variables(scope=scope_dst)
+        copy_ops = []
+        for src, dst in zip(var_src, var_dst):
+            mixed = tau * src + (1.0 - tau) * dst
+            copy_op = tf.assign(dst, mixed)
+            copy_ops.append(copy_op)
+        return copy_ops
